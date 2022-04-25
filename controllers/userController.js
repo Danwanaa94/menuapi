@@ -1,8 +1,7 @@
 const user = require("../models/userSchema");
-const bcrypt = require("bcryptjs");
+const bcrypt = require("bcrypt");
 const validate = require("../config/validator");
-const req = require("express/lib/request");
-const user = require("../models/userSchema");
+const {generateToken} =require("../utils/generateToken");
 
 
 const createUser = async (req, res) =>{
@@ -10,12 +9,20 @@ const {username, email, password} =req.body;
 const valid=await validate({username, email, password});
 if (valid) {
     const hashedPassword = await bcrypt.hash(valid.password, 10);
-    const user = new user({
+    const user =await user.create({
         username,
         email,
         password:hashedPassword,
     });
-    await user.save();
+  if (user) {
+    res.status(201).json({
+    username:user.username,
+    email:user.email,
+    id:user._id,
+    token:generateToken(user._id),
+    
+    });
+  }
     res.status(201).json({
         message: "user created successfully",
         user,
@@ -26,4 +33,5 @@ if (valid) {
     });
 }
 };
-module.exports= {createUser};
+module.exports= {createUser,
+}
