@@ -1,13 +1,13 @@
 const jsonwebtoken = require("jsonwebtoken")
-const user =require("../models/userSchema")
+const User =require("../models/userSchema")
 
 exports.protect= async function(req, res, next) {
 let token;
-if(req.headers.authorization ) {
+if(req.headers.authorization &&req.headers.authorization.startsWith("Bearer")) {
     try{
-        token = req.headers.authorization;
+        token = req.headers.authorization.split(" ")[1];
         const decoded = jwt.verify(token,process.env.JWT_SECRET);
-        req.user = await user.findById(decoded.id)
+        req.user = await User.findById(decoded.id)
         next();
     }catch(err){
         res.status(400).json({
@@ -22,3 +22,13 @@ if(req.headers.authorization ) {
     }
 
 };
+
+//is admin middleware
+
+exports.admin =async function (req, res, next) {
+    if (req.user && req.user.isAdmin) {
+        res.status(401).json({
+            message:"you are not authorized admin",
+        });
+    }
+}
